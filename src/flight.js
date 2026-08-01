@@ -91,9 +91,13 @@ export function makeFlightView(anchor, opts) {
 
   // --- pacing ---------------------------------------------------------------
   // Longer hops take longer and throw more at you; that is what a long trip
-  // costs now that nobody is counting fuel.
+  // costs now that nobody is counting fuel. The floor is what most short hops
+  // land on, so it sets the shortest flight anyone will ever be given.
+  // Links run about 11 to 26 long, so the slope has to be gentle and the
+  // offset generous — divide by distance alone and every trip pins to the
+  // floor, which is exactly how these legs ended up feeling clipped short.
   const speed = clamp(20 + stats.speed * 26, 20, 42);
-  const duration = clamp(distance / 3.2, 6.5, 15);
+  const duration = clamp(5 + distance * 0.5, 10, 18);
   const totalZ = speed * duration;
 
   const dodgy = perks.includes('miser');       // Careful: thinner rock fields
@@ -161,13 +165,30 @@ export function makeFlightView(anchor, opts) {
     }
   }
 
+  /**
+   * Usually one sparkle; sometimes a curving run of them, which gives a long
+   * leg something to chase rather than more empty lane. Returns how much room
+   * to leave before the next one.
+   */
   function spawnSpark() {
-    const m = new THREE.Mesh(sparkGeo, sparkMat);
-    m.position.set((rng() * 2 - 1) * Math.max(1, laneHalf - 1), 0.4, SPAWN_Z);
-    scene.add(m);
-    const halo = glowSprite(0xffe24d, 3, 0.75);
-    m.add(halo);
-    sparks.push(m);
+    const edge = Math.max(1, laneHalf - 1);
+    const run = rng() < 0.38 ? 5 + Math.floor(rng() * 3) : 1;
+    const startX = (rng() * 2 - 1) * edge;
+    const sweep = (rng() * 2 - 1) * edge * 0.9;
+
+    for (let i = 0; i < run; i++) {
+      const t = run === 1 ? 0 : i / (run - 1);
+      const m = new THREE.Mesh(sparkGeo, sparkMat);
+      m.position.set(
+        clamp(startX + sweep * Math.sin(t * Math.PI * 0.9), -edge, edge),
+        0.4,
+        SPAWN_Z - i * 5.5
+      );
+      scene.add(m);
+      m.add(glowSprite(0xffe24d, 3, 0.75));
+      sparks.push(m);
+    }
+    return run > 1 ? 24 : 0;
   }
 
   const view = {
@@ -217,8 +238,8 @@ export function makeFlightView(anchor, opts) {
       }
       nextSparkZ -= step;
       if (nextSparkZ <= 0) {
-        spawnSpark();
-        nextSparkZ = 9 + rng() * 13;
+        const extra = spawnSpark();
+        nextSparkZ = 9 + rng() * 13 + extra;
       }
 
       if (bumpCooldown > 0) bumpCooldown -= dt;
