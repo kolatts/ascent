@@ -351,6 +351,10 @@ function buildWing(side, edgeX) {
     // Tight angular spacing so the feathers overlap into one wing rather
     // than reading as a handful of separate quills.
     f.rotation.y = -0.55 + t * 1.25;
+    // A little curl across the fan, so the wing is never a flat plane that
+    // vanishes when the camera catches it edge on.
+    f.rotation.z = -0.1 + t * 0.34;
+    f.rotation.x = t * 0.16;
     f.scale.set(1.0, 1, 0.8 + Math.sin(t * Math.PI) * 0.78);
     f.position.set(t * 0.2, i * 0.026, t * 0.06);
     wing.add(f);
@@ -360,8 +364,8 @@ function buildWing(side, edgeX) {
   // Pivot lifts the whole fan so the tips ride above the hull.
   const pivot = new THREE.Group();
   pivot.add(wing);
-  pivot.rotation.z = side * 0.44;
-  pivot.position.set(edgeX, 0.28, 0.15);
+  pivot.rotation.z = side * 0.52;
+  pivot.position.set(edgeX, 0.42, 0.15);
   pivot.scale.setScalar(1.05);
   return pivot;
 }
