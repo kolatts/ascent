@@ -105,12 +105,22 @@ export function makeMapView(anchor, map) {
 
   const OFFSET = new THREE.Vector3(-30, 17, 30);
 
-  function desiredCamera() {
+  /**
+   * A tall phone sees far less of the map than a wide screen at the same
+   * distance, and the panel covers its bottom third — so back off as the
+   * viewport narrows, and aim low so the routes sit above the panel.
+   */
+  function desiredCamera(aspect) {
     const n = map.nodes[followId];
     const heavenPos = new THREE.Vector3(heaven.x, heaven.y, heaven.z);
     const here = new THREE.Vector3(n.x, n.y, n.z);
+
+    const pullBack = clamp(1.6 / Math.max(aspect, 0.42), 1, 2.3);
+    const panelBias = aspect < 1.1 ? 7 : 3;
+
     const look = here.clone().lerp(heavenPos, 0.14);
-    const pos = here.clone().add(OFFSET);
+    look.y -= panelBias;
+    const pos = here.clone().add(OFFSET.clone().multiplyScalar(pullBack));
     pos.x += drift.x * 8;
     pos.y += drift.y * 5;
     return { look, pos };
@@ -177,7 +187,8 @@ export function makeMapView(anchor, map) {
       }
       if (!reduced) shipHolder.rotation.z = Math.sin(t * 0.7) * 0.07;
 
-      const { look, pos } = desiredCamera();
+      const rect = viewRect();
+      const { look, pos } = desiredCamera(rect ? rect.width / rect.height : 1.6);
       const k = firstFrame ? 1 : 1 - Math.pow(0.0015, dt);
       camPos.lerp(pos, k);
       camTarget.lerp(look, k);

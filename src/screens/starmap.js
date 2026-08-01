@@ -133,8 +133,9 @@ export function mountStarmap(root, { onRefit, onArrive }) {
           (_, i) => `<i class="${i < done ? 'on' : ''}"></i>`).join('')}</span>
         ${nodeIcon('heaven', 22)}
       </div>`;
-    const refit = el('button.small.refit', { type: 'button', onclick: onRefit },
-      el('span', { html: partIcon('hull', 20) }), 'Change ship');
+    const refit = el('button.small.refit', {
+      type: 'button', onclick: onRefit, 'aria-label': 'Change ship',
+    }, el('span', { html: partIcon('hull', 20) }), el('span.label', {}, 'Change ship'));
     hudEl.append(refit);
   }
 

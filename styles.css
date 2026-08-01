@@ -719,10 +719,15 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .marker { width: 52px; }
   .m-disc { width: 34px; height: 34px; }
   .marker.heaven .m-disc { width: 50px; height: 50px; }
-  .hud { max-width: calc(100% - 118px); }
-  .hud-item { padding: 6px 10px; min-height: 42px; }
+  /* One tidy row rather than three stacked pills. */
+  .hud { max-width: calc(100% - 112px); gap: 6px; }
+  .hud-item { padding: 5px 9px; min-height: 38px; gap: 4px; }
+  .hud-item .of { display: none; }
   .pips { display: none; }
-  .j-track i { width: 7px; height: 7px; }
+  .j-track { gap: 2px; }
+  .j-track i { width: 6px; height: 6px; }
+  .refit { padding: 5px 10px; min-height: 38px; }
+  .refit .label { display: none; }
   .chip { min-width: 70px; min-height: 66px; }
   .title-inner { padding-bottom: 2rem; }
 }
