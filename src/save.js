@@ -1,8 +1,8 @@
 // One slot, one key. Bump SAVE_KEY's version when the shape changes so an old
 // save is ignored instead of half-loaded into a crash.
 
-export const SAVE_KEY = 'ascent.save.v1';
-export const SAVE_VERSION = 1;
+export const SAVE_KEY = 'ascent.save.v2';
+export const SAVE_VERSION = 2;
 
 export function readSave() {
   try {

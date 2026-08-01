@@ -105,50 +105,67 @@ export function powerAnalysis(placements) {
   return { connected, powered, starved, supply, used };
 }
 
-const BASE_FUEL = 4;
 const BASE_SCAN = 10;
-const MIN_THRUST = 2; // a ship with no working thruster can still cough along
+const BASE_RANGE = 40;   // the hull makes a little fuel all by itself
+const MIN_THRUST = 2;    // a ship with no working thruster can still cough along
 
 export function shipStats(placements, activePerks = []) {
   const power = powerAnalysis(placements);
   const live = (p) => power.powered.has(p.uid) && !p.damaged;
 
-  let mass = 0, thrust = 0, fuelCap = BASE_FUEL, cargo = 6, scan = BASE_SCAN, berths = 0, mend = 0;
+  let mass = 0, thrust = 0, tankRange = 0, cargo = 16, scan = BASE_SCAN;
+  let berths = 0, mend = 0, shields = 0;
+  let minCol = GRID_W, maxCol = 0;
+
   for (const p of placements) {
     const def = PARTS[p.type];
     mass += def.mass; // dead weight still weighs
+    // Width counts every part, working or not — a dead cargo bay is still
+    // something you have to steer around a rock.
+    minCol = Math.min(minCol, p.x);
+    maxCol = Math.max(maxCol, p.x + def.w);
     if (!live(p)) continue;
     thrust += def.thrust || 0;
-    fuelCap += def.fuel || 0;
+    tankRange += def.tankRange || 0;
     cargo += def.cargo || 0;
     scan += def.scan || 0;
     berths += def.berth || 0;
     mend += def.mend || 0;
+    shields += def.shield || 0;
   }
 
   const perks = new Set(activePerks);
   if (perks.has('cartographer')) scan += 6;
-  if (perks.has('deeptanks')) fuelCap += 3;
+  if (perks.has('deeptanks')) tankRange += 14;
 
   const effThrust = Math.max(MIN_THRUST, thrust);
   const speed = mass > 0 ? effThrust / mass : 0;
 
+  // How far one trip can be. Engines and tanks both help; every part you bolt
+  // on makes the ship heavier and gives some of it back.
+  const range = Math.round((BASE_RANGE + tankRange) * speed);
+
   return {
-    mass, thrust, fuelCap, cargo, scan, berths, mend, speed,
+    mass, thrust, cargo, scan, berths, mend, shields, speed, range,
     supply: power.supply, used: power.used,
     power,
-    // Cells the player can travel per unit of fuel, for the readout.
-    reach: Math.round(speed * TRAVEL_K * 10) / 10,
+    // Cells across. This is the ship's hitbox when it is threading rocks.
+    widthCells: placements.length ? maxCol - minCol : 1,
+    // Handling: how quickly it slides sideways in flight.
+    agility: Math.round((2.4 + speed * 5.2) * 10) / 10,
   };
 }
 
-export const TRAVEL_K = 14;
+/** Can this ship make that hop in one go? */
+export const canReach = (distance, stats) => distance <= stats.range;
 
-/** Fuel to cross a link of this length with this ship. Always at least 1. */
-export function jumpCost(distance, stats, activePerks = []) {
-  const raw = distance / (TRAVEL_K * Math.max(stats.speed, 0.02));
-  const miser = activePerks.includes('miser') ? 0.85 : 1;
-  return Math.max(1, Math.round(raw * miser));
+/**
+ * Roughly how hard a trip is, 1 to 3, from its length against your range.
+ * A long trip means a long flight with more to dodge, not a fuel bill.
+ */
+export function tripDanger(distance, stats) {
+  const k = distance / Math.max(stats.range, 1);
+  return k <= 0.45 ? 1 : k <= 0.78 ? 2 : 3;
 }
 
 /**
@@ -257,18 +274,21 @@ export function autoBuild(inventory) {
     return true;
   };
 
+  // Kept deliberately narrow. Width is the ship's hitbox when it is threading
+  // rocks, so the ship we hand a new player is a nimble one; going wide is a
+  // choice they make, not a starting condition.
   put('reactor', 3, 2, { essential: true });
   put('hull', 2, 3, { essential: true });   // wiring out to the left thruster
   put('hull', 5, 3, { essential: true });   // and to the right one
   put('thruster', 2, 4);
   put('thruster', 5, 4);
   put('tank', 3, 0);
-  put('quarters', 0, 4);
-  put('cargo', 0, 2);
-  put('scanner', 5, 2);
-  put('quarters', 6, 4);
-  put('repair', 6, 3);
-  put('thruster', 3, 4);
+  put('quarters', 3, 4);
+  put('quarters', 3, 5);   // two bunks, so two pilot skills start awake
+  put('bumper', 2, 2);
+  put('bumper', 5, 2);
+  put('scanner', 2, 1);
+  put('scanner', 5, 1);
 
   return placements;
 }

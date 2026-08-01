@@ -4,7 +4,7 @@
 // every node is reachable, every route makes forward progress, and the
 // distance between neighbours stays inside a band the fuel maths can price.
 
-import { makeRng, pick, randInt, dist3, clamp } from './util.js';
+import { makeRng, pick, randInt, dist3, clamp, lerp as lerpTo } from './util.js';
 
 export const LAYERS = 11;      // node layers, not counting Heaven
 export const LAYER_STEP = 11;  // world units between layers
@@ -13,7 +13,7 @@ export const SPREAD = 19;      // lateral scatter
 export const NODE_TYPES = {
   start:    { id: 'start',    name: 'Home',      tint: '#FBF3DF', hue: 0xfbf3df },
   derelict: { id: 'derelict', name: 'Old ship',  tint: '#D7BE8C', hue: 0xd7be8c },
-  gas:      { id: 'gas',      name: 'Fuel cloud',tint: '#8FD9A8', hue: 0x8fd9a8 },
+  garden:   { id: 'garden',   name: 'Garden',    tint: '#5BE49B', hue: 0x3ade8c },
   station:  { id: 'station',  name: 'Station',   tint: '#9FD4E8', hue: 0x9fd4e8 },
   anomaly:  { id: 'anomaly',  name: 'Something', tint: '#E9A6C4', hue: 0xe9a6c4 },
   beacon:   { id: 'beacon',   name: 'Beacon',    tint: '#FFDD91', hue: 0xffdd91 },
@@ -23,7 +23,7 @@ export const NODE_TYPES = {
 export const NODE_GLYPHS = {
   start: '<path d="M16 4l4 8 8 1-6 6 2 9-8-4-8 4 2-9-6-6 8-1z"/>',
   derelict: '<path d="M7 20l9-14 9 14z" opacity=".9"/><path d="M4 24h24v3H4z"/><path d="M13 12l-4 8" stroke="#241E4E" stroke-width="2"/>',
-  gas: '<circle cx="12" cy="17" r="7"/><circle cx="20" cy="14" r="8"/><circle cx="23" cy="20" r="5"/>',
+  garden: '<path d="M16 28V14"/><path d="M16 16c0-5 4-8 9-8 0 5-4 8-9 8z"/><path d="M16 21c0-4-3-7-8-7 0 4 3 7 8 7z"/><rect x="12" y="26" width="8" height="3" rx="1.5"/>',
   station: '<rect x="11" y="8" width="10" height="16" rx="3"/><rect x="3" y="13" width="6" height="6" rx="2"/><rect x="23" y="13" width="6" height="6" rx="2"/>',
   anomaly: '<circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="4 4"/><path d="M16 10v8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="22" r="1.8"/>',
   beacon: '<path d="M16 3l3 9h-6z"/><circle cx="16" cy="17" r="5"/><path d="M6 27h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
@@ -34,12 +34,18 @@ export const nodeIcon = (type, size = 30) =>
   `<svg viewBox="0 0 32 32" width="${size}" height="${size}" aria-hidden="true" fill="currentColor">${NODE_GLYPHS[type]}</svg>`;
 
 const WEIGHTED = [
-  ...Array(30).fill('derelict'),
-  ...Array(24).fill('gas'),
-  ...Array(14).fill('station'),
+  ...Array(32).fill('derelict'),
+  ...Array(18).fill('garden'),
+  ...Array(16).fill('station'),
   ...Array(22).fill('anomaly'),
-  ...Array(10).fill('beacon'),
+  ...Array(12).fill('beacon'),
 ];
+
+/**
+ * The longest hop a brand new ship can make. Generation guarantees every node
+ * has at least one way onward inside this, so no route can dead-end.
+ */
+export const STARTER_RANGE = 26;
 
 export function generateMap(seed) {
   const rng = makeRng(seed);
@@ -116,9 +122,22 @@ export function generateMap(seed) {
     }
   }
 
-  // Fuel clouds and wrecks get their initial stock.
+  // Pull in any node whose nearest way onward is further than a starting ship
+  // can fly. Moving the node is gentler than deleting the edge.
+  for (let L = 0; L < layers.length - 1; L++) {
+    for (const a of layers[L]) {
+      const onward = a.links.map((id) => nodes[id]).filter((b) => b.layer > a.layer);
+      if (!onward.length) continue;
+      const nearest = onward.reduce((p, q) => (dist3(a, q) < dist3(a, p) ? q : p));
+      let guard = 0;
+      while (dist3(a, nearest) > STARTER_RANGE && guard++ < 40) {
+        a.y = lerpTo(a.y, nearest.y, 0.2);
+        a.z = lerpTo(a.z, nearest.z, 0.2);
+      }
+    }
+  }
+
   for (const n of nodes) {
-    if (n.type === 'gas') n.stock = 4;
     if (n.type === 'derelict') n.stock = randInt(rng, 2, 4);
   }
 

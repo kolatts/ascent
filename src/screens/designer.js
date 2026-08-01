@@ -56,7 +56,6 @@ export function mountDesigner(root, { onLaunch, onBackToPilot }) {
         for (const p of st.placements) stock[p.type] = (stock[p.type] || 0) + 1;
         st.placements = autoBuild(stock);
         st.inventory = spendInventory(stock, st.placements);
-        st.fuel = Math.min(st.fuel, shipStats(st.placements, []).fuelCap);
       });
       held = null;
       speak('Here is a ship.');
@@ -145,7 +144,6 @@ export function mountDesigner(root, { onLaunch, onBackToPilot }) {
     mutate((s2) => {
       s2.placements.push({ uid: newUid(), type, x: spot[0], y: spot[1], damaged: false });
       s2.inventory[type] = (s2.inventory[type] || 0) - 1;
-      s2.fuel = Math.min(s2.fuel, shipStats(s2.placements, []).fuelCap);
     });
     if ((getState().inventory[type] || 0) <= 0) held = null;
     refresh();
@@ -158,7 +156,6 @@ export function mountDesigner(root, { onLaunch, onBackToPilot }) {
     mutate((s2) => {
       s2.placements = s2.placements.filter((q) => q.uid !== uid);
       s2.inventory[p.type] = (s2.inventory[p.type] || 0) + 1;
-      s2.fuel = Math.min(s2.fuel, shipStats(s2.placements, []).fuelCap);
     });
     held = p.type;
     refresh();
@@ -244,13 +241,16 @@ export function mountDesigner(root, { onLaunch, onBackToPilot }) {
     drawGhost();
 
     // readout
-    const fuelPct = Math.round((sh.used / Math.max(1, sh.supply)) * 100);
+    const powerPct = Math.round((sh.used / Math.max(1, sh.supply)) * 100);
     readoutEl.innerHTML = `
-      <div class="stat" title="How far one drop of fuel takes you">
-        ${gauge('reach')}<b>${sh.reach.toFixed(1)}</b><span>reach</span>
+      <div class="stat" title="How far the ship can fly in one go">
+        ${gauge('range')}<b>${sh.range}</b><span>range</span>
       </div>
-      <div class="stat" title="How much fuel the ship can hold">
-        ${gauge('fuel')}<b>${sh.fuelCap}</b><span>fuel</span>
+      <div class="stat" title="How quickly it dodges">
+        ${gauge('agility')}<b>${sh.agility.toFixed(1)}</b><span>dodge</span>
+      </div>
+      <div class="stat" title="How wide it is. Narrow ships fit through gaps.">
+        ${gauge('width')}<b>${sh.widthCells}</b><span>width</span>
       </div>
       <div class="stat" title="How heavy the ship is">
         ${gauge('mass')}<b>${sh.mass}</b><span>weight</span>
@@ -260,7 +260,7 @@ export function mountDesigner(root, { onLaunch, onBackToPilot }) {
       </div>
       <div class="stat wide ${sh.used > sh.supply ? 'over' : ''}" title="Power">
         ${gauge('power')}
-        <div class="bar"><i style="width:${Math.min(100, fuelPct)}%"></i></div>
+        <div class="bar"><i style="width:${Math.min(100, powerPct)}%"></i></div>
         <span>${sh.used}/${sh.supply} power</span>
       </div>`;
 
@@ -328,8 +328,9 @@ const crackMark = () =>
   `<svg class="mark" viewBox="0 0 32 32" width="17" height="17" fill="currentColor" aria-hidden="true"><rect x="2" y="12" width="28" height="9" rx="4.5" transform="rotate(-40 16 16)"/><circle cx="13" cy="19" r="1.3" fill="#2c1c1c"/><circle cx="19" cy="13" r="1.3" fill="#2c1c1c"/><circle cx="19" cy="19" r="1.3" fill="#2c1c1c"/><circle cx="13" cy="13" r="1.3" fill="#2c1c1c"/></svg>`;
 const gauge = (kind) => {
   const paths = {
-    reach: '<path d="M16 2l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>',
-    fuel: '<path d="M16 4c5 6 8 9 8 13a8 8 0 0 1-16 0c0-4 3-7 8-13z"/>',
+    range: '<path d="M16 2l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>',
+    agility: '<path d="M4 20l8-8 5 5 11-11v8h-3l-8 8-5-5-6 6z"/>',
+    width: '<path d="M2 16l6-5v3h16v-3l6 5-6 5v-3H8v3z"/>',
     mass: '<path d="M6 24h20l-4-12H10z"/><circle cx="16" cy="8" r="3"/>',
     cargo: '<rect x="4" y="10" width="24" height="14" rx="3"/><path d="M4 16h24" stroke="#241E4E" stroke-width="2"/>',
     power: '<path d="M18 2l-11 16h8l-3 12 11-16h-8z"/>',

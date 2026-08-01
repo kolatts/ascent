@@ -7,12 +7,14 @@ import { autoBuild, spendInventory, shipStats, activePerks } from './ship.js';
 import { PARTS } from './parts.js';
 
 export const STARTING_INVENTORY = {
-  hull: 10, reactor: 1, thruster: 2, tank: 1, cargo: 1, scanner: 1, quarters: 2, repair: 0,
+  hull: 10, reactor: 1, thruster: 2, tank: 1, cargo: 1,
+  scanner: 1, quarters: 2, repair: 0, bumper: 2,
 };
 
 /** Most a new run may inherit of each part from the traveller before it. */
 const CARRY_CAP = {
-  hull: 18, reactor: 2, thruster: 4, tank: 3, cargo: 2, scanner: 3, quarters: 4, repair: 2,
+  hull: 18, reactor: 2, thruster: 4, tank: 3, cargo: 2,
+  scanner: 3, quarters: 4, repair: 2, bumper: 4,
 };
 
 let state = null;
@@ -28,10 +30,6 @@ function notify() {
 /** The only write path. Everything else calls through here. */
 export function mutate(fn) {
   fn(state);
-  // A tank that breaks or comes off the grid takes its fuel with it. Holding
-  // this invariant in one place means no caller can leave the HUD reading 6/4.
-  const cap = shipStats(state.placements, currentPerks(state)).fuelCap;
-  state.fuel = Math.max(0, Math.min(state.fuel, cap));
   writeSave(state);
   notify();
 }
@@ -58,9 +56,10 @@ export function newGame(carryOver = null) {
     pilot: { build: 1, suit: 0, helmet: 0, perks: ['miser', 'steady', 'scrapper'] },
     placements,
     inventory: spendInventory(inventory, placements),
-    fuel: 10,
     map,
     currentId: map.startId,
+    pendingTrip: null,
+    lastLanding: null,
     dazedPerks: [],
     log: [],
     legacy: carryOver ? { runs: carryOver.runs, parts: carryOver.parts } : { runs: 0, parts: {} },
@@ -69,9 +68,7 @@ export function newGame(carryOver = null) {
     launched: false,
   };
 
-  const stats = shipStats(state.placements, currentPerks(state));
-  state.fuel = stats.fuelCap;
-  reveal(state.map, state.currentId, stats.scan);
+  reveal(state.map, state.currentId, shipStats(state.placements, currentPerks(state)).scan);
   writeSave(state);
   notify();
   return state;
@@ -137,10 +134,6 @@ export function goTo(screen) {
     // offers to carry on rather than starting the player over at the pilot.
     if (screen === 'map') s.launched = true;
   });
-}
-
-export function setFuel(v) {
-  mutate((s) => { s.fuel = Math.max(0, Math.min(v, shipStats(s.placements, currentPerks(s)).fuelCap)); });
 }
 
 /** Add parts, respecting cargo space. Returns how many actually fitted. */

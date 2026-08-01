@@ -154,32 +154,49 @@ export function skyLights(scene, warm = 0xffdd91, cool = 0x3b4a8c) {
   scene.add(rim);
 }
 
+// Everything on the ship is glossy moulded plastic in a bright colour: think
+// a good toy rocket, not an antique. Clearcoat gives the highlight that reads
+// as "new" rather than "salvaged".
 const matCache = new Map();
 function partMaterial(hue, state) {
   const k = `${hue}:${state}`;
   if (matCache.has(k)) return matCache.get(k);
   let m;
   if (state === 'dark') {
-    m = new THREE.MeshStandardMaterial({ color: 0x3a3f57, roughness: 0.9, metalness: 0.1 });
+    m = new THREE.MeshPhysicalMaterial({
+      color: 0x6a7290, roughness: 0.75, metalness: 0, clearcoat: 0.3,
+    });
   } else if (state === 'broken') {
-    m = new THREE.MeshStandardMaterial({ color: 0x2c2536, roughness: 1, metalness: 0.05, emissive: 0x5a2020, emissiveIntensity: 0.35 });
+    m = new THREE.MeshPhysicalMaterial({
+      color: 0x7d5a68, roughness: 0.85, metalness: 0,
+      emissive: 0x7a2b2b, emissiveIntensity: 0.4,
+    });
   } else {
-    m = new THREE.MeshStandardMaterial({
-      color: hue, roughness: 0.5, metalness: 0.35,
-      emissive: new THREE.Color(hue).multiplyScalar(0.18),
+    m = new THREE.MeshPhysicalMaterial({
+      color: hue, roughness: 0.22, metalness: 0,
+      clearcoat: 1, clearcoatRoughness: 0.12,
+      emissive: new THREE.Color(hue).multiplyScalar(0.22),
     });
   }
   matCache.set(k, m);
   return m;
 }
 
-const BRASS = new THREE.MeshStandardMaterial({ color: 0xc79a4b, roughness: 0.35, metalness: 0.75 });
-const CREAM = new THREE.MeshStandardMaterial({
-  color: 0xfffaf0, roughness: 0.55, metalness: 0.02, side: THREE.DoubleSide,
-  emissive: 0xfff3c4, emissiveIntensity: 0.5,
+const TRIM = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff, roughness: 0.15, metalness: 0, clearcoat: 1,
+  emissive: 0x556080, emissiveIntensity: 0.25,
 });
-const RAFT = new THREE.MeshStandardMaterial({ color: 0x8a6a37, roughness: 0.55, metalness: 0.6 });
-const RAFT_BROKEN = new THREE.MeshStandardMaterial({ color: 0x3a2a30, roughness: 0.95, metalness: 0.1 });
+const CREAM = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff, roughness: 0.25, metalness: 0, side: THREE.DoubleSide,
+  clearcoat: 1, emissive: 0x9fd0ff, emissiveIntensity: 0.35,
+});
+const RAFT = new THREE.MeshPhysicalMaterial({
+  color: 0xf3f6ff, roughness: 0.3, metalness: 0, clearcoat: 1,
+  emissive: 0x3a4a7a, emissiveIntensity: 0.18,
+});
+const RAFT_BROKEN = new THREE.MeshPhysicalMaterial({
+  color: 0x6b5a68, roughness: 0.9, metalness: 0,
+});
 
 // ------------------------------------------------------------------- ships --
 
@@ -206,7 +223,7 @@ function buildPartMesh(type, state) {
       g.add(plate);
       const rivet = new THREE.SphereGeometry(0.055, 6, 5);
       for (const [rx, rz] of [[-0.3, -0.3], [0.3, 0.3]]) {
-        const r = new THREE.Mesh(rivet, BRASS);
+        const r = new THREE.Mesh(rivet, TRIM);
         r.position.set(rx, 0.15, rz);
         g.add(r);
       }
@@ -214,7 +231,7 @@ function buildPartMesh(type, state) {
     }
     case 'reactor': {
       g.add(new THREE.Mesh(new THREE.CylinderGeometry(W * 0.42, W * 0.48, 0.44, 16), mat));
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(W * 0.44, 0.07, 8, 24), BRASS);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(W * 0.44, 0.07, 8, 24), TRIM);
       ring.rotation.x = Math.PI / 2;
       ring.position.y = 0.24;
       g.add(ring);
@@ -233,7 +250,7 @@ function buildPartMesh(type, state) {
     }
     case 'thruster': {
       g.add(new THREE.Mesh(new THREE.BoxGeometry(W, 0.34, D * 0.6), mat));
-      const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.19, 0.55, 12, 1, true), BRASS);
+      const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.19, 0.55, 12, 1, true), TRIM);
       bell.rotation.x = Math.PI / 2;
       bell.position.z = D * 0.42;
       g.add(bell);
@@ -260,7 +277,7 @@ function buildPartMesh(type, state) {
       body.rotation.x = Math.PI / 2;
       body.position.y = 0.1;
       g.add(body);
-      const band = new THREE.Mesh(new THREE.TorusGeometry(W * 0.35, 0.05, 8, 20), BRASS);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(W * 0.35, 0.05, 8, 20), TRIM);
       band.position.y = 0.1;
       band.rotation.y = Math.PI / 2;
       g.add(band);
@@ -268,16 +285,16 @@ function buildPartMesh(type, state) {
     }
     case 'cargo': {
       g.add(new THREE.Mesh(new THREE.BoxGeometry(W, 0.42, D), mat));
-      const lid = new THREE.Mesh(new THREE.BoxGeometry(W * 0.92, 0.1, D * 0.24), BRASS);
+      const lid = new THREE.Mesh(new THREE.BoxGeometry(W * 0.92, 0.1, D * 0.24), TRIM);
       lid.position.y = 0.25;
       g.add(lid);
-      const latch = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), BRASS);
+      const latch = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), TRIM);
       latch.position.set(0, 0.3, D * 0.35);
       g.add(latch);
       break;
     }
     case 'scanner': {
-      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.4, 8), BRASS);
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.4, 8), TRIM);
       mast.position.y = 0.2;
       g.add(mast);
       const dish = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.3, 14, 1, true), mat);
@@ -296,7 +313,7 @@ function buildPartMesh(type, state) {
       const dome = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat);
       dome.position.y = 0.14;
       g.add(dome);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.045, 8, 16), BRASS);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.045, 8, 16), TRIM);
       ring.position.set(W * 0.3, 0.16, 0);
       ring.rotation.y = Math.PI / 2;
       g.add(ring);
@@ -309,13 +326,28 @@ function buildPartMesh(type, state) {
     }
     case 'repair': {
       g.add(new THREE.Mesh(new THREE.BoxGeometry(W, 0.3, D), mat));
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 8), BRASS);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 8), TRIM);
       arm.position.set(-W * 0.2, 0.32, 0);
       arm.rotation.z = 0.5;
       g.add(arm);
-      const joint = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), BRASS);
+      const joint = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), TRIM);
       joint.position.set(-W * 0.36, 0.58, 0);
       g.add(joint);
+      break;
+    }
+    case 'bumper': {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.14, 10, 20), mat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.12;
+      g.add(ring);
+      const nub = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), TRIM);
+      nub.position.y = 0.14;
+      g.add(nub);
+      if (lit) {
+        const p = glowSprite(0xffe24d, 1.6, 0.6);
+        p.position.y = 0.2;
+        g.add(p);
+      }
       break;
     }
     default:
@@ -324,49 +356,38 @@ function buildPartMesh(type, state) {
   return g;
 }
 
-/** One feather, lying flat in the XZ plane with its tip pointing at -Z. */
-function featherGeometry() {
+/**
+ * A smooth swept wing with real thickness, extruded so it still catches the
+ * light when the camera looks straight along it.
+ */
+function wingGeometry() {
   const s = new THREE.Shape();
-  s.moveTo(0, 0);
-  s.quadraticCurveTo(0.40, 0.5, 0.13, 1.7);
-  s.quadraticCurveTo(0.02, 1.95, -0.09, 1.7);
-  s.quadraticCurveTo(-0.32, 0.5, 0, 0);
-  const geo = new THREE.ShapeGeometry(s, 12);
-  geo.rotateX(-Math.PI / 2);
+  s.moveTo(0, -0.9);
+  s.quadraticCurveTo(1.9, -1.15, 3.1, -0.15);
+  s.quadraticCurveTo(3.5, 0.15, 3.05, 0.42);
+  s.quadraticCurveTo(1.7, 0.95, 0, 1.0);
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, {
+    depth: 0.16, bevelEnabled: true, bevelSize: 0.07, bevelThickness: 0.06, bevelSegments: 2,
+  });
+  geo.rotateX(Math.PI / 2);   // lay it flat in the XZ plane
+  geo.translate(0, 0.08, 0);
   return geo;
 }
-let featherGeo = null;
+let wingGeo = null;
 
-/**
- * A fan of feathers sweeping out and back from one flank of the hull, tilted
- * up so the light catches the faces instead of the edges.
- */
 function buildWing(side, edgeX) {
-  featherGeo = featherGeo || featherGeometry();
-  const wing = new THREE.Group();
-  const n = 10;
-  for (let i = 0; i < n; i++) {
-    const t = i / (n - 1);
-    const f = new THREE.Mesh(featherGeo, CREAM);
-    // Tight angular spacing so the feathers overlap into one wing rather
-    // than reading as a handful of separate quills.
-    f.rotation.y = -0.55 + t * 1.25;
-    // A little curl across the fan, so the wing is never a flat plane that
-    // vanishes when the camera catches it edge on.
-    f.rotation.z = -0.1 + t * 0.34;
-    f.rotation.x = t * 0.16;
-    f.scale.set(1.0, 1, 0.8 + Math.sin(t * Math.PI) * 0.78);
-    f.position.set(t * 0.2, i * 0.026, t * 0.06);
-    wing.add(f);
-  }
-  wing.rotation.y = -side * (Math.PI / 2 + 0.24);
+  wingGeo = wingGeo || wingGeometry();
+  const wing = new THREE.Mesh(wingGeo, CREAM);
+  wing.scale.set(side, 1, 1.15);
 
-  // Pivot lifts the whole fan so the tips ride above the hull.
+  const tip = glowSprite(0x7fe4ff, 2.2, 0.55);
+  tip.position.set(side * 3.1, 0.15, 0.2);
+
   const pivot = new THREE.Group();
-  pivot.add(wing);
-  pivot.rotation.z = side * 0.52;
-  pivot.position.set(edgeX, 0.42, 0.15);
-  pivot.scale.setScalar(1.05);
+  pivot.add(wing, tip);
+  pivot.rotation.z = side * 0.3;   // tips ride a little above the hull
+  pivot.position.set(edgeX, 0.34, 0.1);
   return pivot;
 }
 
@@ -493,7 +514,7 @@ export function buildPilot(pilot) {
   pack.position.set(0, 1.02, -0.42 * b);
   g.add(pack);
   for (const dx of [-0.14, 0.14]) {
-    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.46, 10), BRASS);
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.46, 10), TRIM);
     t.position.set(dx, 1.04, -0.56 * b);
     g.add(t);
   }
@@ -515,19 +536,19 @@ export function buildPilot(pilot) {
   const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.4 * b, 22, 16), glass);
   bowl.position.y = 1.6;
   g.add(bowl);
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.3 * b, 0.055, 8, 22), BRASS);
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(0.3 * b, 0.055, 8, 22), TRIM);
   collar.position.y = 1.3;
   collar.rotation.x = Math.PI / 2;
   g.add(collar);
 
   const style = pilot.helmet ?? 0;
   if (style === 1) {
-    const brow = new THREE.Mesh(new THREE.TorusGeometry(0.4 * b, 0.05, 8, 24, Math.PI), BRASS);
+    const brow = new THREE.Mesh(new THREE.TorusGeometry(0.4 * b, 0.05, 8, 24, Math.PI), TRIM);
     brow.position.set(0, 1.6, 0);
     brow.rotation.set(-0.35, 0, 0);
     g.add(brow);
   } else if (style === 2) {
-    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.42, 8), BRASS);
+    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.42, 8), TRIM);
     fin.position.set(0, 2.16, 0);
     g.add(fin);
     const bulb = glowSprite(0xffdd91, 1.1, 0.8);
@@ -548,10 +569,10 @@ export function buildPilot(pilot) {
   limb(0.19 * b, 0.42, 0.4, -0.04);
 
   for (const dx of [-1, 1]) {
-    const glove = new THREE.Mesh(new THREE.SphereGeometry(0.135 * b, 12, 10), BRASS);
+    const glove = new THREE.Mesh(new THREE.SphereGeometry(0.135 * b, 12, 10), TRIM);
     glove.position.set(dx * 0.63 * b, 0.78, 0);
     g.add(glove);
-    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.22 * b, 0.14, 0.34 * b), BRASS);
+    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.22 * b, 0.14, 0.34 * b), TRIM);
     boot.position.set(dx * 0.19 * b, 0.14, 0.06);
     g.add(boot);
   }

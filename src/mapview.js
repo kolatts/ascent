@@ -92,7 +92,7 @@ export function makeMapView(anchor, map) {
 
   // --- the ship -------------------------------------------------------------
   const shipHolder = new THREE.Group();
-  shipHolder.scale.setScalar(1.5);
+  shipHolder.scale.setScalar(1.05);
   scene.add(shipHolder);
   let shipMesh = null;
 
@@ -141,9 +141,9 @@ export function makeMapView(anchor, map) {
       const to = map.nodes[id];
       if (animate && !reduced) {
         const from = shipHolder.position.clone();
-        flight = { from, to: new THREE.Vector3(to.x, to.y + 4.2, to.z), t: 0, dur: 1.15 };
+        flight = { from, to: new THREE.Vector3(to.x, to.y + 6.5, to.z), t: 0, dur: 1.15 };
       } else {
-        shipHolder.position.set(to.x, to.y + 4.2, to.z);
+        shipHolder.position.set(to.x, to.y + 6.5, to.z);
       }
       followId = id;
     },

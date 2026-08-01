@@ -9,8 +9,8 @@ export const ANOMALIES = [
     icon: 'anomaly',
     text: 'Something enormous drifts past, singing.',
     choices: [
-      { label: 'Sing back', icon: 'anomaly', good: { text: 'It follows you a while and shows you the way.', reveal: 40 }, bad: { text: 'It swims off. The quiet is nice.', fuel: 1 } },
-      { label: 'Stay very still', icon: 'quarters', good: { text: 'It passes over you. Warm air fills your tanks.', fuel: 5 }, bad: { text: 'It brushes the hull. Something rattles loose.', damage: 1 } },
+      { label: 'Sing back', icon: 'anomaly', good: { text: 'It follows you a while and shows you the way.', reveal: 40 }, bad: { text: 'It swims off. The quiet is nice.', parts: { hull: 1 } } },
+      { label: 'Stay very still', icon: 'quarters', good: { text: 'It passes over you. Everything hums.', parts: { hull: 3 }, heal: true }, bad: { text: 'It brushes the hull. Something rattles loose.', damage: 1 } },
     ],
   },
   {
@@ -19,7 +19,7 @@ export const ANOMALIES = [
     text: 'A garden is growing on a broken wing.',
     choices: [
       { label: 'Pick some', icon: 'cargo', good: { text: 'The seeds are heavy and useful.', parts: { hull: 3 } }, bad: { text: 'They crumble to dust in your glove.', parts: { hull: 1 } } },
-      { label: 'Leave it be', icon: 'anomaly', good: { text: 'You feel better. The pilot rests well.', heal: true, fuel: 2 }, bad: { text: 'You feel better anyway.', fuel: 1 } },
+      { label: 'Leave it be', icon: 'anomaly', good: { text: 'You feel better. The pilot rests well.', heal: true, parts: { hull: 2 } }, bad: { text: 'You feel better anyway.', parts: { hull: 1 } } },
     ],
   },
   {
@@ -28,7 +28,7 @@ export const ANOMALIES = [
     text: 'An old lamp is still burning out here.',
     choices: [
       { label: 'Read the map beside it', icon: 'scanner', good: { text: 'Someone drew the whole road.', reveal: 55 }, bad: { text: 'The ink has run, but some of it holds.', reveal: 22 } },
-      { label: 'Take the lamp', icon: 'reactor', good: { text: 'It burns in your reactor for hours.', fuel: 6 }, bad: { text: 'It goes out the moment you lift it.', parts: { hull: 2 } } },
+      { label: 'Take the lamp', icon: 'reactor', good: { text: 'It lights the whole cabin for days.', parts: { bumper: 1, hull: 2 } }, bad: { text: 'It goes out the moment you lift it.', parts: { hull: 2 } } },
     ],
   },
   {
@@ -36,9 +36,9 @@ export const ANOMALIES = [
     icon: 'anomaly',
     text: 'Another ship, exactly like yours, waves.',
     choices: [
-      { label: 'Wave back', icon: 'quarters', good: { text: 'They hand you fuel through the window.', fuel: 4 }, bad: { text: 'They wave until you are out of sight.', fuel: 1 } },
+      { label: 'Wave back', icon: 'quarters', good: { text: 'They hand you a spare part through the window.', parts: { bumper: 1, hull: 1 } }, bad: { text: 'They wave until you are out of sight.', parts: { hull: 1 } } },
       { label: 'Trade parts', icon: 'cargo', good: { text: 'You each get the piece you needed.', parts: { thruster: 1 } }, bad: { text: 'A fair swap, more or less.', parts: { hull: 2 } } },
-      { label: 'Fly on', icon: 'thruster', good: { text: 'You save your fuel. They understand.', fuel: 2 }, bad: { text: 'You save your fuel.', fuel: 1 } },
+      { label: 'Fly on', icon: 'thruster', good: { text: 'You press on. They understand.', parts: { hull: 2 } }, bad: { text: 'You press on.', parts: { hull: 1 } } },
     ],
   },
   {
@@ -46,8 +46,8 @@ export const ANOMALIES = [
     icon: 'anomaly',
     text: 'A bright storm is crackling ahead.',
     choices: [
-      { label: 'Fly straight through', icon: 'thruster', good: { text: 'The storm shoves you along for free.', fuel: 5, reveal: 25 }, bad: { text: 'Sparks jump the hull. One box goes dark.', damage: 1 } },
-      { label: 'Go the long way round', icon: 'scanner', good: { text: 'Slow, calm, and you spot a shortcut.', reveal: 30 }, bad: { text: 'Slow and calm. You use a little fuel.', fuel: -1 } },
+      { label: 'Fly straight through', icon: 'thruster', good: { text: 'The storm shoves you along for free.', hop: true, reveal: 25 }, bad: { text: 'Sparks jump the hull. One box goes dark.', damage: 1 } },
+      { label: 'Go the long way round', icon: 'scanner', good: { text: 'Slow, calm, and you spot a shortcut.', reveal: 30 }, bad: { text: 'Slow and calm. Nothing much happens.', parts: { hull: 1 } } },
     ],
   },
   {
@@ -56,7 +56,7 @@ export const ANOMALIES = [
     text: 'A sleeping pilot floats in a small pod.',
     choices: [
       { label: 'Wake them gently', icon: 'quarters', good: { text: 'They thank you and mend your ship.', heal: true, parts: { hull: 2 } }, bad: { text: 'They mumble, roll over, and sleep on.', parts: { hull: 1 } } },
-      { label: 'Tuck them in and go', icon: 'anomaly', good: { text: 'You leave them a lamp. It feels right.', fuel: 3 }, bad: { text: 'You leave them a lamp.', fuel: 1 } },
+      { label: 'Tuck them in and go', icon: 'anomaly', good: { text: 'You leave them a lamp. It feels right.', parts: { hull: 2, bumper: 1 } }, bad: { text: 'You leave them a lamp.', parts: { hull: 1 } } },
     ],
   },
   {
@@ -74,7 +74,7 @@ export const ANOMALIES = [
     text: 'A door stands open, with nothing around it.',
     choices: [
       { label: 'Step through', icon: 'thruster', good: { text: 'You come out much closer to the light.', hop: true }, bad: { text: 'You come out where you started, dizzy.', daze: true } },
-      { label: 'Close it politely', icon: 'quarters', good: { text: 'It hums, pleased, and gives you fuel.', fuel: 4 }, bad: { text: 'It swings open again behind you.', fuel: 1 } },
+      { label: 'Close it politely', icon: 'quarters', good: { text: 'It hums, pleased, and gives you a gift.', parts: { tank: 1 } }, bad: { text: 'It swings open again behind you.', parts: { hull: 1 } } },
     ],
   },
 ];

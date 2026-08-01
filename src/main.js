@@ -8,6 +8,7 @@ import { mountTitle } from './screens/title.js';
 import { mountPilot } from './screens/pilot.js';
 import { mountDesigner } from './screens/designer.js';
 import { mountStarmap } from './screens/starmap.js';
+import { mountFlight } from './screens/flight.js';
 import { mountArrival } from './screens/arrival.js';
 import { toggleReadAloud, readAloudSupported, hush } from './voice.js';
 
@@ -42,7 +43,11 @@ function mount(name) {
         current = mountStarmap(root, {
           onRefit: () => goTo('designer'),
           onArrive: () => goTo('arrival'),
+          onFly: () => {},   // beginTrip already moved us to the flight screen
         });
+        break;
+      case 'flight':
+        current = mountFlight(root, { onDone: () => goTo('map') });
         break;
       case 'arrival':
         current = mountArrival(root, {

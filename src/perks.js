@@ -9,7 +9,7 @@ export const PERKS = [
   },
   {
     id: 'miser', name: 'Careful',
-    blurb: 'Uses less fuel on every trip.',
+    blurb: 'Fewer rocks in the way.',
     glyph: '<path d="M16 5c5 6 8 9 8 13a8 8 0 0 1-16 0c0-4 3-7 8-13z"/><circle cx="16" cy="19" r="3" fill="#241E4E"/>',
   },
   {
@@ -29,7 +29,7 @@ export const PERKS = [
   },
   {
     id: 'steady', name: 'Steady Hands',
-    blurb: 'Nothing breaks when you drift.',
+    blurb: 'Bumps never break anything.',
     glyph: '<path d="M8 16c0-5 3-9 8-9s8 4 8 9-3 9-8 9-8-4-8-9z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M12 16l3 3 5-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
   },
   {
@@ -38,8 +38,8 @@ export const PERKS = [
     glyph: '<path d="M16 27S5 20 5 13a6 6 0 0 1 11-3 6 6 0 0 1 11 3c0 7-11 14-11 14z"/>',
   },
   {
-    id: 'deeptanks', name: 'Deep Tanks',
-    blurb: 'Carries a little extra fuel.',
+    id: 'deeptanks', name: 'Magnet',
+    blurb: 'Sparkles come to you. Fly further.',
     glyph: '<rect x="9" y="4" width="14" height="24" rx="7"/><path d="M9 18h14" stroke="#241E4E" stroke-width="3"/>',
   },
 ];
