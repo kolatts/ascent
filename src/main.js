@@ -70,7 +70,7 @@ function mount(name) {
 
 const hasFlown = () => {
   const s = getState();
-  return s.arrived || s.map.nodes.some((n) => n.visited && n.type !== 'start');
+  return !!(s.launched || s.arrived);
 };
 
 function shell() {
@@ -83,10 +83,12 @@ function shell() {
   });
   speaker.classList.toggle('on', !!getState().readAloud);
 
+  // Not "Home" — the first node on the map is already called that, and two
+  // controls with the same spoken name on one screen is a maze.
   const home = el('button.iconbtn', {
     type: 'button',
-    'aria-label': 'Home',
-    title: 'Home',
+    'aria-label': 'Main menu',
+    title: 'Main menu',
     onclick: () => goTo('title'),
     html: homeGlyph(),
   });

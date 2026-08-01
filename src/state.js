@@ -66,6 +66,7 @@ export function newGame(carryOver = null) {
     legacy: carryOver ? { runs: carryOver.runs, parts: carryOver.parts } : { runs: 0, parts: {} },
     readAloud: state?.readAloud ?? false,
     arrived: false,
+    launched: false,
   };
 
   const stats = shipStats(state.placements, currentPerks(state));
@@ -130,7 +131,12 @@ export function addLog(text, icon = 'hull') {
 }
 
 export function goTo(screen) {
-  mutate((s) => { s.screen = screen; });
+  mutate((s) => {
+    s.screen = screen;
+    // Once the map has been opened the run counts as under way, so the title
+    // offers to carry on rather than starting the player over at the pilot.
+    if (screen === 'map') s.launched = true;
+  });
 }
 
 export function setFuel(v) {

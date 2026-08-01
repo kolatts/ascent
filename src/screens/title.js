@@ -5,7 +5,7 @@ import { speak } from '../voice.js';
 
 export function mountTitle(root, { onPlay, onNew }) {
   const s = getState();
-  const started = s.map.nodes.some((n) => n.visited && n.type !== 'start') || s.arrived;
+  const started = s.launched || s.arrived;
 
   const screen = el('div.screen.title', {},
     el('div.title-art', { 'aria-hidden': 'true' }),
