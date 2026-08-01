@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ascent — build a little ship, fly it to the light</title>
+<meta name="description" content="Build a small ship out of scavenged parts, pick a pilot, and find your own way across the stars to the light. A gentle browser game with no way to lose.">
+<meta name="theme-color" content="#0b0c1c">
+
+<link rel="icon" href="./assets/icon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="./assets/icon-256.png" sizes="256x256" type="image/png">
+<link rel="apple-touch-icon" href="./assets/icon-180.png">
+
+<meta property="og:title" content="Ascent">
+<meta property="og:description" content="Build a little ship. Fly it to the light.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="./assets/social.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <main id="app"></main>
+
+  <noscript>
+    <div class="noscript">Ascent needs JavaScript to fly. Turn it on and reload.</div>
+  </noscript>
+
+  <script type="module" src="./src/main.js"></script>
+  <script>
+    // If the module never boots (old browser, blocked CDN), say so plainly.
+    setTimeout(function () {
+      var app = document.getElementById('app');
+      if (app && !app.children.length) {
+        app.innerHTML = '<div class="screen oops"><h1 class="display">The ship will not start</h1>' +
+          '<p class="big-line">This browser could not load the game. Try a newer one, ' +
+          'or check that nothing is blocking cdn.jsdelivr.net.</p></div>';
+      }
+    }, 9000);
+  </script>
+</body>
+</html>

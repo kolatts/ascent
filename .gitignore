@@ -1,0 +1,8 @@
+# Raw generation output — the prompts and style stay so any image can be
+# remade; the multi-megabyte originals do not need to live in the repo.
+.claude/image-generation/**/*.png
+
+.playwright-cli/
+node_modules/
+.DS_Store
+Thumbs.db
