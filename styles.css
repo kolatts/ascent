@@ -20,7 +20,10 @@
   --ink:     var(--cream);
   --ink-dim: rgba(251, 243, 223, 0.62);
 
-  --cell: clamp(34px, 6.6vw, 66px);
+  /* Bounded by height as well as width: in a two column layout a grid sized
+     purely off the width can be taller than the window, which shoves the
+     launch button off the bottom. */
+  --cell: clamp(30px, min(6.6vw, 7.6vh), 66px);
   --gap: 5px;
   --r: 18px;
   --r-sm: 12px;
@@ -222,12 +225,28 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   display: grid;
   grid-template-columns: minmax(0, auto) minmax(300px, 1fr);
   gap: clamp(12px, 2vw, 30px);
-  align-items: start;
+  /* Stretch, not start: a start-aligned column sizes to its content and grows
+     past the viewport, and then its own overflow never engages. */
+  align-items: stretch;
 }
 .build-left { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-width: 0; }
 .build-right {
   display: flex; flex-direction: column; gap: 12px;
   min-width: 0; height: 100%;
+  /* Whenever there are two columns this one is the scroller, so a short
+     window cannot push the launch button off the bottom of the screen. */
+  overflow: auto;
+}
+
+/* Opaque, because sticky lifts it over whatever it is scrolling past. */
+.build-actions:not(.minor) {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  padding: 8px 0 2px;
+  background: #0f1024;
+  box-shadow: 0 -14px 16px -6px #0f1024;
+  border-radius: var(--r-sm);
 }
 
 .grid-wrap { position: relative; width: max-content; }
@@ -441,6 +460,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 }
 .pilot-left, .pilot-right { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .pilot-right { overflow: auto; justify-content: center; }
+.pilot-right .build-actions { position: sticky; bottom: 0; }
 
 .dials { display: flex; flex-direction: column; gap: 8px; }
 .dial { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -492,7 +512,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .screen.map { padding: 0; position: relative; }
 /* z-index here traps the markers' own stacking inside the stage, so a distant
    node cannot float over the panel or the HUD. */
-.map-stage { position: absolute; inset: 0; z-index: 1; }
+.map-stage { position: absolute; inset: 0; z-index: 1; overflow: hidden; }
 .markers { position: absolute; inset: 0; pointer-events: none; }
 
 .marker {
@@ -826,11 +846,105 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
 /* --------------------------------------------------------------- responsive */
 
-@media (max-width: 980px) {
-  .build-body, .pilot-body { grid-template-columns: 1fr; overflow: auto; }
-  .screen.designer, .screen.pilot { overflow: auto; }
-  .preview { min-height: 200px; }
-  .build-right { height: auto; }
+/* Portrait phones and tablets: one column, and the body does the scrolling so
+   the sticky action bar has a container to stick to. */
+@media (max-width: 980px) and (orientation: portrait) {
+  .screen.designer, .screen.pilot { overflow: hidden; }
+  .build-body, .pilot-body {
+    grid-template-columns: 1fr;
+    /* Rows must size to their content. Left to stretch, the grid squeezes a
+       column below its own height and — since the column does not clip — its
+       contents spill straight over the column stacked beneath it. */
+    grid-auto-rows: min-content;
+    align-content: start;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .build-left, .build-right, .pilot-left, .pilot-right {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+    justify-content: flex-start;
+  }
+  .preview { min-height: clamp(150px, 22vh, 240px); }
+  .preview.tall { min-height: clamp(190px, 30vh, 320px); }
+}
+
+/* The one action that must never be hidden. In one column the whole right-hand
+   column starts below the fold, so sticky has nothing to stick to — the bar has
+   to be pinned to the viewport and the scroller padded to clear it. */
+@media (max-width: 980px) and (orientation: portrait) {
+  .build-actions:not(.minor) {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 20;
+    padding: 10px clamp(12px, 2vw, 26px) calc(10px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, var(--void) 62%, rgba(11, 12, 28, 0.88) 88%, rgba(11, 12, 28, 0));
+    backdrop-filter: blur(6px);
+  }
+  .build-body, .pilot-body { padding-bottom: 88px; }
+}
+
+/* Narrow portrait: fit the grid to the width, and give the cells every pixel
+   going, because 34px squares are not a fair target for small fingers. */
+@media (max-width: 700px) and (orientation: portrait) {
+  :root {
+    --gap: 3px;
+    --cell: clamp(30px, calc((100vw - 56px) / 8), 60px);
+  }
+  .display { font-size: clamp(1.5rem, 6.5vw, 2rem); }
+  .screen-head .sub { font-size: 0.88rem; }
+  .chip { min-width: 62px; min-height: 60px; padding: 5px 6px 4px; }
+  .chip-name { font-size: 0.6rem; }
+  .readout { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px; }
+  .stat { padding: 6px 4px; }
+  .stat b { font-size: 1.1rem; }
+  .perkgrid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 7px; }
+  .perkcard { min-height: 92px; padding: 9px 10px; }
+  .swatch { width: 42px; height: 42px; }
+  .dial-label { min-width: 52px; font-size: 0.8rem; }
+}
+
+/* Short and wide — a phone on its side. There is width here, so keep both
+   columns; what is scarce is height, so the grid is sized off that instead. */
+@media (max-height: 620px) and (orientation: landscape) {
+  :root {
+    --gap: 3px;
+    --cell: clamp(22px, calc((100vh - 176px) / 6), 52px);
+  }
+  .screen { padding: 8px clamp(10px, 1.6vw, 20px); gap: 8px; }
+  .screen.designer, .screen.pilot { overflow: hidden; }
+  .display { font-size: clamp(1.15rem, 3.2vw, 1.6rem); }
+  .screen-head .sub { display: none; }
+  .build-body { grid-template-columns: minmax(0, auto) minmax(260px, 1fr); gap: 14px; }
+  .pilot-body { grid-template-columns: minmax(200px, 0.85fr) minmax(280px, 1.15fr); gap: 14px; }
+  .build-right, .pilot-right, .build-left, .pilot-left {
+    height: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+  }
+  .preview { min-height: 120px; }
+  .preview.tall { min-height: 150px; }
+  .grid-edge { font-size: 0.6rem; letter-spacing: 0.16em; padding: 1px 0; }
+  .chip { min-width: 56px; min-height: 52px; padding: 3px 5px; }
+  .chip-name { display: none; }
+  .readout { grid-template-columns: repeat(auto-fit, minmax(66px, 1fr)); gap: 5px; }
+  .stat { padding: 4px 3px; }
+  .stat b { font-size: 1rem; }
+  .stat span { font-size: 0.62rem; }
+  .perkgrid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 6px; }
+  .perkcard { min-height: 78px; padding: 7px 9px; }
+  .pk-blurb { font-size: 0.7rem; }
+  .big { min-height: 48px; font-size: 1rem; padding: 0.4rem 1rem; }
+  .small { min-height: 40px; }
+  .panel { bottom: 8px; }
+  .panel-body { padding: 10px 14px; gap: 7px; }
+  .big-line { font-size: 1rem; }
+  .hint { display: none; }
+  .dials { gap: 5px; }
+  .swatch { width: 40px; height: 40px; }
 }
 
 @media (max-width: 620px) {
@@ -839,18 +953,27 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
   .marker.heaven .m-disc { width: 50px; height: 50px; }
   /* One tidy row rather than three stacked pills. */
   .hud { max-width: calc(100% - 112px); gap: 6px; }
-  /* Drop the flight readout below the corner buttons instead of under them. */
-  .flighthud { top: 74px; width: calc(100% - 24px); }
-  .coach { bottom: 22%; }
-  .hud-item { padding: 5px 9px; min-height: 38px; gap: 4px; }
+  .hud-item { padding: 5px 9px; min-height: 40px; gap: 4px; }
   .hud-item .of { display: none; }
   .pips { display: none; }
   .j-track { gap: 2px; }
   .j-track i { width: 6px; height: 6px; }
-  .refit { padding: 5px 10px; min-height: 38px; }
+  .refit { padding: 5px 10px; min-height: 40px; }
   .refit .label { display: none; }
-  .chip { min-width: 70px; min-height: 66px; }
+  /* Drop the flight readout below the corner buttons instead of under them. */
+  .flighthud { top: 74px; width: calc(100% - 24px); }
+  .coach { bottom: 22%; }
   .title-inner { padding-bottom: 2rem; }
+  .choices .big { flex: 1 1 140px; }
+}
+
+/* Landscape phones put the corner buttons and the flight bar on the same line,
+   so the bar stays centred but narrows out of their way. */
+@media (max-height: 620px) and (orientation: landscape) {
+  .flighthud { top: 8px; width: min(420px, calc(100% - 230px)); gap: 5px; }
+  .flightbar { padding: 5px 11px; }
+  .shieldrow { min-height: 38px; padding: 5px 10px; }
+  .coach { bottom: 12%; font-size: 1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
